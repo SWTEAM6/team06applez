@@ -1,7 +1,15 @@
-﻿#include "sha256.h"
+﻿#define _CRT_SECURE_NO_WARNINGS
+#include "sha256.h"
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+
+// 16진수 -> 2진수
+void hex_to_bin(const char* hex_str, uint8_t* bin_arr, size_t bin_size) {
+    for (size_t i = 0; i < bin_size; i++) {
+        sscanf(hex_str + 2 * i, "%2hhx", &bin_arr[i]);
+    }
+}
 
 // 16진수 출력 함수
 void print_hex(const uint8_t* data, size_t len) {
@@ -45,6 +53,7 @@ int main() {
     int total = sizeof(test_cases) / sizeof(test_case_t);
 
     for (int i = 0; i < total; i++) {
+
         printf("테스트 %d: \"%s\"\n", i + 1, test_cases[i].input);
 
         uint8_t hash[SHA256_DIGEST_SIZE];
@@ -54,13 +63,10 @@ int main() {
         printf("실제값: ");
         print_hex(hash, SHA256_DIGEST_SIZE);
 
-        // 16진수 문자열을 바이트 배열로 변환
-        uint8_t expected_bytes[SHA256_DIGEST_SIZE];
-        for (int j = 0; j < SHA256_DIGEST_SIZE; j++) {
-            scanf_s(&test_cases[i].expected[j * 2], "%2hhx", &expected_bytes[j]);
-        }
-
-        if (memcmp(hash, expected_bytes, SHA256_DIGEST_SIZE) == 0) {
+        uint8_t expected_bin[SHA256_DIGEST_SIZE];
+        hex_to_bin(test_cases[i].expected, expected_bin, SHA256_DIGEST_SIZE);
+        
+        if (memcmp(hash, expected_bin, SHA256_DIGEST_SIZE) == 0) {
             printf("✓ 통과\n\n");
             passed++;
         }
