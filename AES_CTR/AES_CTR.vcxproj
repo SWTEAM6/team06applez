@@ -127,8 +127,8 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="sha256.c" />
-    <ClCompile Include="sha256_test.c">
+    <ClCompile Include="sha512.c" />
+    <ClCompile Include="sha512_test.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="AES_CTR.c">
@@ -136,7 +136,7 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="sha256.h" />
+    <ClInclude Include="sha512.h" />
     <ClInclude Include="AES_CTR.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
     </ClInclude>

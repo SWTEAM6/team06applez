@@ -18,10 +18,10 @@
     <ClCompile Include="AES_CTR.c">
       <Filter>소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="sha256.c">
+    <ClCompile Include="sha512.c">
       <Filter>소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="sha256_test.c">
+    <ClCompile Include="sha512_test.c">
       <Filter>소스 파일</Filter>
     </ClCompile>
   </ItemGroup>
@@ -29,7 +29,7 @@
     <ClInclude Include="AES_CTR.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
-    <ClInclude Include="sha256.h">
+    <ClInclude Include="sha512.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
   </ItemGroup>
