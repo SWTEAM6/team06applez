@@ -127,19 +127,14 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="sha512.c" />
-    <ClCompile Include="sha512_test.c">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
-    </ClCompile>
-    <ClCompile Include="AES_CTR.c">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
-    </ClCompile>
+    <ClCompile Include="AES_CTR_ALL.c" />
+    <ClCompile Include="AES_CTR_test.c" />
+    <ClCompile Include="SHA512.c" />
+    <ClCompile Include="SHA512_test.c" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="sha512.h" />
-    <ClInclude Include="AES_CTR.h">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
-    </ClInclude>
+    <ClInclude Include="AES_CTR_ALL.h" />
+    <ClInclude Include="SHA512.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

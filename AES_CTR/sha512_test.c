@@ -1,7 +1,7 @@
 ﻿// 만든 SHA-512 함수가 잘 작동하는지 확인하기 위해 공식 해시값과 비교하는 코드
 
 #define _CRT_SECURE_NO_WARNINGS  // scanf, strcpy 같은 함수 쓸 때 경고 안 뜨게 함
-#include "sha512.h"
+#include "SHA512.h"
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
