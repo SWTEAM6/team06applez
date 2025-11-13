@@ -57,7 +57,6 @@ void state_to_bytes(const uint8_t st[4][4], uint8_t out[16]) {
 aes_status_t aes_init_ctx(aes_ctx_t* ctx, const uint8_t key[16]) {
     if (!ctx || !key) return AES_ERR_ARG;  // NULL 검사
     ctx->rounds = AES128_ROUNDS;           // AES-128은 항상 10라운드
-    ctx->has_dec = false;                  // 복호화 키 아직 준비 안 됨(CTR만 쓸 때는 계속 False여도 정상)
 
     // 초기 키(16바이트)를 4워드로 저장: W[0..3]
     for (int i = 0;i < 4;i++) 
@@ -70,16 +69,6 @@ aes_status_t aes_init_ctx(aes_ctx_t* ctx, const uint8_t key[16]) {
             t = subw(rotl8(t)) ^ ((uint32_t)RCON[i / 4 - 1] << 24);  // RotWord->SubWord->Rcon
         ctx->rk_enc[i] = ctx->rk_enc[i - 4] ^ t;  // W[i] = W[i-4] XOR t
     }
-    return AES_OK;
-}
-
-aes_status_t aes_prepare_decrypt(aes_ctx_t* ctx) {
-    if (!ctx) return AES_ERR_ARG;
-    // (주의) CTR만 쓴다면 실사용 안 함. 호환 위해 복호화 키 배열에 역순으로 저장
-    for (int i = 0;i < (int)AES128_RK_WORDS;i++) {
-        ctx->rk_dec[i] = ctx->rk_enc[AES128_RK_WORDS - 1 - i];
-    }
-    ctx->has_dec = true;
     return AES_OK;
 }
 
@@ -161,16 +150,6 @@ aes_status_t aes_encrypt_block(const aes_ctx_t* ctx,
     return AES_OK;
 }
 
-/* 주의: CTR 전용 사용 가정. ECB 복호화가 실제로 필요하면 역라운드 구현 추가 필요 */
-aes_status_t aes_decrypt_block(const aes_ctx_t* ctx,
-    const uint8_t ct[AES_BLOCK_BYTES],
-    uint8_t pt[AES_BLOCK_BYTES]) {
-    if (!ctx || !ct || !pt) return AES_ERR_ARG;
-    // if (!ctx->has_dec) return AES_ERR_STATE;  // 복호화 키가 준비되지 않았으면 에러 
-    // => 이 코드는 잘못됨. CTR 전용으로 사용하려면 이 줄 삭제
-    // CTR에서는 enc=dec 키스트림 생성용이므로 암호화 경로 재사용 가능
-    return aes_encrypt_block(ctx, ct, pt);
-}
 
 /* ===== 3) CTR 스트림 ===== */
 // counter_len 바이트 만큼(뒤에서부터) big-endian으로 +1 (in-place 증가)
