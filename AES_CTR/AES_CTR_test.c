@@ -2,7 +2,7 @@
 // 단위 테스트 및 통합 테스트 포함
 // AES-128/192/256 모두 지원
 
-#define _CRT_SECURE_NO_WARNINGS
+#define _CRT_SECURE_NO_WARNINGS  // sscanf나 sprintf같은 함수 쓸 때 나오는 보안 경고 막기 위한 매크로
 #include "AES_CTR_ALL.h"
 #include <stdio.h>
 #include <string.h>
@@ -30,7 +30,7 @@ static bool bytes_equal(const uint8_t* a, const uint8_t* b, size_t len) {
     return memcmp(a, b, len) == 0;
 }
 
-// 테스트 결과 출력
+// 테스트 결과 출력용 카운터
 static int test_count = 0;
 static int test_passed = 0;
 static int test_failed = 0;
@@ -47,6 +47,7 @@ static void test_assert(const char* test_name, bool condition) {
 }
 
 // ===== 단위 테스트 1: 키 스케줄링 =====
+// AES 의 키 확장이 NIST FIPS 197의 예제와 동일하게 출력되는지 확인
 
 void test_key_schedule(void) {
     printf("\n=== Unit Test 1: Key Schedule ===\n");
@@ -59,8 +60,8 @@ void test_key_schedule(void) {
     aes_ctx_t ctx;
     aes_status_t status = aes_init_ctx_128(&ctx, key);
     test_assert("Key schedule initialization", status == AES_OK);
-    test_assert("Round count setting", ctx.rounds == AES128_ROUNDS);
-    test_assert("Key size setting", ctx.key_size == AES_KEY_128);
+    test_assert("Round count setting", ctx.rounds == AES128_ROUNDS);  // 라운드 10인지 확인
+    test_assert("Key size setting", ctx.key_size == AES_KEY_128);  // 키 사이즈 확인
     
     // 첫 번째 라운드 키 확인 (W[0-3])
     uint32_t expected_w0 = 0x2b7e1516;
@@ -93,10 +94,9 @@ void test_key_schedule(void) {
     printf("DEBUG: Actual W[43] = 0x%08x\n", ctx.rk_enc[43]);
     
     // FIPS 197 Appendix A.1의 마지막 라운드 키 값
-    // 참고: FIPS 197에서는 마지막 라운드 키를 명시적으로 제공하지 않지만,
+    // FIPS 197에서는 마지막 라운드 키를 명시적으로 제공하지 않지만,
     // 키 확장 알고리즘을 통해 계산할 수 있음
-    // 실제 구현값과 비교하여 테스트
-    uint32_t expected_w40 = 0xd014f9a8;  // 수정된 예상값
+    uint32_t expected_w40 = 0xd014f9a8;  
     uint32_t expected_w41 = 0xc9ee2589;
     uint32_t expected_w42 = 0xe13f0cc8;
     uint32_t expected_w43 = 0xb6630ca6;
@@ -108,6 +108,7 @@ void test_key_schedule(void) {
 }
 
 // ===== 단위 테스트 2: 단일 블록 암호화 =====
+// AES-128 블록 암호화가 FIPS 표와 동일한지 확인
 
 void test_block_encryption(void) {
     printf("\n=== Unit Test 2: Single Block Encryption ===\n");
@@ -125,6 +126,7 @@ void test_block_encryption(void) {
     aes_ctx_t ctx;
     aes_init_ctx_128(&ctx, key);
     
+    // 암호화한 값이 동일한지 확인
     aes_status_t status = aes_encrypt_block(&ctx, plaintext, ciphertext);
     test_assert("Block encryption execution", status == AES_OK);
     test_assert("Encryption result match", bytes_equal(ciphertext, expected, 16));
@@ -149,6 +151,7 @@ void test_block_encryption(void) {
 // 복호화 테스트는 통합 테스트에서 CTR 모드로 수행됨
 
 // ===== 단위 테스트 4: 상태 변환 함수 =====
+// AES 내부 상태가 열 기준으로 제대로 변환되는지 확인
 
 void test_state_conversion(void) {
     printf("\n=== Unit Test 4: State Conversion Functions ===\n");
@@ -162,12 +165,13 @@ void test_state_conversion(void) {
     uint8_t state[4][4];
     uint8_t output[16];
     
-    bytes_to_state(input, state);
-    state_to_bytes(state, output);
+    bytes_to_state(input, state);  // 1차원 -> 4x4 상태 행렬
+    state_to_bytes(state, output);  // 4x4 -> 1차원 배열
     
+    // 왕복 변환 후 원본 input과 일치하는지 확인
     test_assert("State conversion roundtrip", bytes_equal(input, output, 16));
     
-    // 예상 상태 행렬 확인 (column-major)
+    // column-major 내부로 인덱싱이 제대로 구현됐는지 확인
     // bytes_to_state: st[i][j] = in[i + 4*j]
     // 첫 번째 열 (j=0): in[0]=0x32, in[1]=0x43, in[2]=0xf6, in[3]=0xa8
     test_assert("State matrix [0][0]", state[0][0] == 0x32);
@@ -183,6 +187,7 @@ void test_state_conversion(void) {
 }
 
 // ===== 단위 테스트 5: 카운터 증가 함수 =====
+// CTR 모드에서 카운터 증가 함수 (overflow/carry/length) 모두 제대로 처리되는지 확인
 
 void test_ctr_increment(void) {
     printf("\n=== Unit Test 5: Counter Increment Function ===\n");
@@ -190,6 +195,7 @@ void test_ctr_increment(void) {
     uint8_t counter[16];
     
     // 테스트 1: 기본 증가 (counter_len = 4)
+    // 마지막 4바이트를 빅엔디안 카운터로 보고 증가
     memset(counter, 0, 16);
     counter[12] = 0x00; counter[13] = 0x00; counter[14] = 0x00; counter[15] = 0x00;
     ctr_increment(counter, 4);
@@ -204,8 +210,8 @@ void test_ctr_increment(void) {
     test_assert("Counter carry (0xFF->0x00)", 
         counter[12] == 0x00 && counter[13] == 0x00 && 
         counter[14] == 0x01 && counter[15] == 0x00);
-    
-    // 테스트 3: 큰 값 증가
+   
+    // 테스트 3: 최대값에서 한 번 더 증가 (0xFFFFFFFF -> 0x00000000)
     memset(counter, 0, 16);
     counter[12] = 0xFF; counter[13] = 0xFF; counter[14] = 0xFF; counter[15] = 0xFF;
     ctr_increment(counter, 4);
@@ -213,7 +219,7 @@ void test_ctr_increment(void) {
         counter[12] == 0x00 && counter[13] == 0x00 && 
         counter[14] == 0x00 && counter[15] == 0x00);
     
-    // 테스트 4: 8바이트 카운터 (인덱스 8-15)
+    // 테스트 4: 8바이트 카운터 (인덱스 8-15 범위를 빅엔디안으로 증가)
     memset(counter, 0, 16);
     counter[8] = 0x00; counter[9] = 0x00; counter[10] = 0x00; counter[11] = 0x00;
     counter[12] = 0x00; counter[13] = 0x00; counter[14] = 0x00; counter[15] = 0x42;
@@ -223,18 +229,20 @@ void test_ctr_increment(void) {
         counter[8] == 0x00 && counter[9] == 0x00 && counter[10] == 0x00 && counter[11] == 0x00 &&
         counter[12] == 0x00 && counter[13] == 0x00 && counter[14] == 0x00 && counter[15] == 0x43);
     
-    // 테스트 5: 여러 번 증가
+    // 테스트 5: 256번 증가했을 때 값이 예상대로 나오는지 확인
     memset(counter, 0, 16);
     counter[15] = 0x00;
     for (int i = 0; i < 256; i++) {
         ctr_increment(counter, 4);
     }
+    // 0x00000000에서 256번 증가 -> 0x00000100
     test_assert("Counter 256 increments", 
         counter[12] == 0x00 && counter[13] == 0x00 && 
         counter[14] == 0x01 && counter[15] == 0x00);
 }
 
 // ===== 단위 테스트 6: 오류 처리 =====
+// NULL 인자, 잘못된 counter_length 등이 정상적으로 에러 코드를 반환하는지 확인
 
 void test_error_handling(void) {
     printf("\n=== Unit Test 6: Error Handling ===\n");
@@ -244,10 +252,11 @@ void test_error_handling(void) {
     uint8_t data[16] = {0};
     uint8_t output[16];
     
-    // NULL 포인터 테스트
+    // NULL 포인터 테스트: ctx=NULL
     aes_status_t status = aes_init_ctx_128(NULL, key);
     test_assert("NULL context initialization", status == AES_ERR_ARG);
     
+    // key=NULL
     status = aes_init_ctx_128(&ctx, NULL);
     test_assert("NULL key initialization", status == AES_ERR_ARG);
     
@@ -287,6 +296,7 @@ void test_error_handling(void) {
 void test_ctr_basic(void) {
     printf("\n=== Integration Test 1: CTR Mode Basic Operation ===\n");
     
+    // NIST 예제 AES-128 키 사용
     const char* key_hex = "2b7e151628aed2a6abf7158809cf4f3c";
     uint8_t key[16];
     hex_to_bytes(key_hex, key, 16);
@@ -305,15 +315,15 @@ void test_ctr_basic(void) {
     
     // 암호화
     aes_status_t status = aes_ctr_xor_stream(&ctx, counter, 4, plaintext, 32, ciphertext);
-    test_assert("CTR encryption execution", status == AES_OK);
-    test_assert("Encryption result differs from plaintext", !bytes_equal(ciphertext, plaintext, 32));
+    test_assert("CTR encryption execution", status == AES_OK);  // 에러 없는지 확인
+    test_assert("Encryption result differs from plaintext", !bytes_equal(ciphertext, plaintext, 32));  
     
     // 카운터 재설정
     memset(counter, 0, 16);
     counter[15] = 0x01;
     
     // 복호화 (CTR은 암호화와 동일)
-    status = aes_ctr_xor_stream(&ctx, counter, 4, ciphertext, 32, decrypted);
+    status = aes_ctr_xor_stream(&ctx, counter, 4, ciphertext, 32, decrypted);  // 같은 카운터 값부터 시작해서 한 번 더 XOR
     test_assert("CTR decryption execution", status == AES_OK);
     test_assert("Decryption result matches", bytes_equal(decrypted, plaintext, 32));
 }
@@ -330,17 +340,19 @@ void test_ctr_various_lengths(void) {
     aes_ctx_t ctx;
     aes_init_ctx_128(&ctx, key);
     
-    // 다양한 길이 테스트
+    // 다양한 길이 테스트(특히 버그가 생기기 쉬운 길이에서 테스트)
     size_t lengths[] = {1, 15, 16, 17, 31, 32, 33, 64, 100, 256};
     int num_lengths = sizeof(lengths) / sizeof(lengths[0]);
     
+    // 각 길이에 대해 동적 할당
+    // 길이마다 새로운 버퍼를 만들어서 격리 테스트
     for (int i = 0; i < num_lengths; i++) {
         size_t len = lengths[i];
         uint8_t* plaintext = (uint8_t*)malloc(len);
         uint8_t* ciphertext = (uint8_t*)malloc(len);
         uint8_t* decrypted = (uint8_t*)malloc(len);
         
-        // 테스트 데이터 생성
+        // 테스트 데이터 생성 (패턴 있는 값)
         for (size_t j = 0; j < len; j++) {
             plaintext[j] = (uint8_t)(i * 17 + j);
         }
@@ -351,7 +363,7 @@ void test_ctr_various_lengths(void) {
         // 암호화
         aes_status_t status1 = aes_ctr_xor_stream(&ctx, counter, 4, plaintext, len, ciphertext);
         
-        // 카운터 재설정
+        // 매 길이마다 카운터 재설정(0x0000...0001)
         memset(counter, 0, 16);
         counter[15] = 0x01;
         
@@ -371,6 +383,7 @@ void test_ctr_various_lengths(void) {
 }
 
 // ===== 통합 테스트 3: 인플레이스 처리 =====
+// 입출력 버퍼가 완전히 동일할 때도 안전하게 동작하는지 확인
 
 void test_ctr_inplace(void) {
     printf("\n=== Integration Test 3: In-place Processing ===\n");
@@ -385,13 +398,14 @@ void test_ctr_inplace(void) {
     uint8_t data[64];
     for (int i = 0; i < 64; i++) data[i] = (uint8_t)i;
     
+    // 원본 백업
     uint8_t data_copy[64];
     memcpy(data_copy, data, 64);
     
     uint8_t counter[16] = {0};
     counter[15] = 0x01;
     
-    // 인플레이스 암호화
+    // 인플레이스 암호화(src == dst == data)
     aes_status_t status1 = aes_ctr_xor_stream(&ctx, counter, 4, data, 64, data);
     test_assert("In-place encryption execution", status1 == AES_OK);
     test_assert("In-place encryption result changed", !bytes_equal(data, data_copy, 64));
@@ -407,6 +421,7 @@ void test_ctr_inplace(void) {
 }
 
 // ===== 통합 테스트 4: 여러 블록 연속 처리 =====
+// 여러 블록을 연속 처리할 때 카운터 증가와 키스트림 변화가 정상인지 확인
 
 void test_ctr_multiple_blocks(void) {
     printf("\n=== Integration Test 4: Multiple Block Sequential Processing ===\n");
@@ -438,6 +453,7 @@ void test_ctr_multiple_blocks(void) {
     // 복호화
     aes_status_t status2 = aes_ctr_xor_stream(&ctx, counter, 4, ciphertext, 80, decrypted);
     
+    // CTR이 5블록 연속에서도 잘 동작하는지 확인
     test_assert("Multiple block encryption", status1 == AES_OK);
     test_assert("Multiple block decryption", status2 == AES_OK);
     test_assert("Multiple block result match", bytes_equal(decrypted, plaintext, 80));
@@ -482,6 +498,7 @@ void test_ctr_nist_vector(void) {
     aes_init_ctx_128(&ctx, key);
     
     // 카운터 = IV
+    // counter_len = 16(16바이트 전체를 카운터로 사용) -> (CTR 예제 방식에 맞춘 것)
     uint8_t counter[16];
     memcpy(counter, iv, 16);
     
@@ -548,6 +565,7 @@ void test_aes192_basic(void) {
     printf("\n=== Integration Test 7: AES-192 Basic Operation ===\n");
     
     // AES-192 테스트 키 (24바이트)
+    // 초기화 성공, 라운드 수, 키 길이 enum 제대로 세팅됐는지 확인
     const char* key_hex = "8e73b0f7da0e6452c810f32b809079e562f8ead2522c6b7b";
     uint8_t key[24];
     hex_to_bytes(key_hex, key, 24);
