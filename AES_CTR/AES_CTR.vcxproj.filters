@@ -15,21 +15,33 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="AES_CTR.c">
+    <ClCompile Include="AES_CTR_ALL.c">
       <Filter>소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="sha256.c">
+    <ClCompile Include="CCM.c">
       <Filter>소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="sha256_test.c">
+    <ClCompile Include="SHA512.c">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="AES_HMAC.c">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="compare_benchmark.c">
       <Filter>소스 파일</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="AES_CTR.h">
+    <ClInclude Include="AES_CTR_ALL.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
-    <ClInclude Include="sha256.h">
+    <ClInclude Include="CCM.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="SHA512.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="AES_HMAC.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
   </ItemGroup>

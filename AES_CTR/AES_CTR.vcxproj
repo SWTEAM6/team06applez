@@ -18,6 +18,19 @@
       <Platform>x64</Platform>
     </ProjectConfiguration>
   </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="AES_CTR_ALL.c" />
+    <ClCompile Include="AES_HMAC.c" />
+    <ClCompile Include="CCM.c" />
+    <ClCompile Include="compare_benchmark.c" />
+    <ClCompile Include="SHA512.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="AES_CTR_ALL.h" />
+    <ClInclude Include="AES_HMAC.h" />
+    <ClInclude Include="CCM.h" />
+    <ClInclude Include="SHA512.h" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
@@ -126,21 +139,6 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
   </ItemDefinitionGroup>
-  <ItemGroup>
-    <ClCompile Include="sha256.c" />
-    <ClCompile Include="sha256_test.c">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
-    </ClCompile>
-    <ClCompile Include="AES_CTR.c">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
-    </ClCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="sha256.h" />
-    <ClInclude Include="AES_CTR.h">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
-    </ClInclude>
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
